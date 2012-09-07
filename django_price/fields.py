@@ -27,31 +27,30 @@ class PriceField(models.DecimalField):
 
 
 class PriceObjectAttr(object):
-    def __init__(self, model, field, name):
+    def __init__(self, model, access, name):
         self.model = model
-        self.field = field
+        self.access = access
         self.name = name
     
     def __get__(self, obj, type=None):
-        value = getattr(obj, self.field.attname, None)
+        value = getattr(obj, self.access.price, None)
         if value is None:
             return None
-        return self.field._get_price(obj, value)
+        return self.access._get_price(obj, value)
     
     def __set__(self, obj, value):
         if isinstance(value, Price):
-            self.field._set_currency(obj, value)
-            setattr(obj, self.field.attname, self.field._get_price_value(value))
+            self.access._set_currency(obj, value)
+            setattr(obj, self.access.price, self.access._get_price_value(value))
         else:
-            setattr(obj, self.field.attname, value)
+            setattr(obj, self.access.price, value)
 
 
-class PriceObjectField(PriceField):
-    def __init__(self, *args, **kwargs):
-        self.currency = kwargs.pop('currency', None)
-        self.tax = kwargs.pop('tax', None)
-        self.property_name = kwargs.pop('property_name', '%s_obj')
-        super(PriceObjectField, self).__init__(*args, **kwargs)
+class PriceAccessBase(object):
+    def __init__(self, price, tax, currency=None):
+        self.price = price
+        self.tax = tax
+        self.currency = currency
     
     def _get_currency(self, instance):
         if self.currency is None:
@@ -89,32 +88,6 @@ class PriceObjectField(PriceField):
             return tax
         return getattr(instance, tax)
     
-    def get_prep_value(self, value):
-        if isinstance(value, Price):
-            value = self._get_price_value(value)
-        return super(PriceObjectField, self).get_prep_value(value)
-    
-    def get_db_prep_value(self, value, connection, prepared=False):
-        if isinstance(value, Price):
-            value = self._get_price_value(value)
-        return super(PriceObjectField, self).get_db_prep_value(value, connection=connection, prepared=prepared)
-    
-    def get_db_prep_save(self, value, connection):
-        if isinstance(value, Price):
-            value = self._get_price_value(value)
-        return super(PriceObjectField, self).get_db_prep_save(value, connection=connection)
-    
-    def value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
-        if isinstance(value, Price):
-            value = self._get_price_value(value)
-        return value
-    
-    def to_python(self, value):
-        if isinstance(value, Price):
-            return value
-        return super(PriceObjectField, self).to_python(value)
-    
     def _get_price(self, instance, price):
         raise NotImplemented()
     
@@ -122,34 +95,16 @@ class PriceObjectField(PriceField):
         raise NotImplemented()
     
     def contribute_to_class(self, cls, name):
-        if not isinstance(self.tax, Tax):
-            field = cls._meta.get_field(self.tax)
-            if not isinstance(field, models.ForeignKey):
-                raise RuntimeError('invalid tax')
-        super(PriceObjectField, self).contribute_to_class(cls, name)
-        property_name = self.property_name
-        if '%s' in property_name:
-            property_name = property_name % name
-        setattr(cls, property_name, PriceObjectAttr(cls, self, name))
+        setattr(cls, name, PriceObjectAttr(cls, self, name))
         def get_price(s):
-            return getattr(s, property_name)
+            return getattr(s, name)
         setattr(cls, "get_%s" % name, get_price)
         def set_price(s, v):
-            return setattr(s, property_name, v)
+            return setattr(s, name, v)
         setattr(cls, "set_%s" % name, set_price)
-    
-    def formfield(self, **kwargs):
-        raise NotImplemented()
-    
-    def south_field_triple(self):
-        field_class, args, kwargs = south_field_triple(self)
-        kwargs['currency'] = repr(self.currency)
-        kwargs['tax'] = repr(self.tax)
-        kwargs['property_name'] = repr(self.property_name)
-        return field_class, args, kwargs
 
 
-class NetPriceField(PriceObjectField):
+class NetPriceAccess(PriceAccessBase):
     def _get_price(self, instance, price):
         tax = self._get_tax(instance)
         price = Price(
@@ -161,18 +116,9 @@ class NetPriceField(PriceObjectField):
     
     def _get_price_value(self, price):
         return price.net
-    
-    def formfield(self, **kwargs):
-        from .forms import NetPriceField as NetPriceFormField
-        defaults = {
-            'form_class': NetPriceFormField,
-        }
-        defaults.update(kwargs)
-        # we skip PriceObjectField.formfield, as this raises NotImplemented
-        return super(PriceObjectField, self).formfield(**defaults)
 
 
-class GrossPriceField(PriceObjectField):
+class GrossPriceAccess(PriceAccessBase):
     def _get_price(self, instance, price):
         tax = self._get_tax(instance)
         net = tax.reverse(price)
@@ -186,28 +132,30 @@ class GrossPriceField(PriceObjectField):
     
     def _get_price_value(self, price):
         return price.gross
-    
-    def formfield(self, **kwargs):
-        from .forms import GrossPriceField as GrossPriceFormField
-        defaults = {
-            'form_class': GrossPriceFormField,
-        }
-        defaults.update(kwargs)
-        # we skip PriceObjectField.formfield, as this raises NotImplemented
-        return super(PriceObjectField, self).formfield(**defaults)
 
 
 # currency
 
 
+class CurrencyField(models.CharField):
+    def __init__(self, *args, **kwargs):
+        from .currencies import CURRENCIES
+        kwargs.setdefault('max_length', 3)
+        kwargs.setdefault('default', price_settings.DEFAULT_CURRENCY)
+        kwargs.setdefault('choices', [(i[0], i[0]) for i in CURRENCIES])
+        super(CurrencyField, self).__init__(*args, **kwargs)
+    
+    south_field_triple = south_field_triple
+
+
 class CurrencyObjectAttr(object):
-    def __init__(self, model, field, name):
+    def __init__(self, model, access, name):
         self.model = model
-        self.field = field
+        self.access = access
         self.name = name
     
     def __get__(self, obj, type=None):
-        value = getattr(obj, self.field.attname, None)
+        value = getattr(obj, self.access.currency, None)
         if value is None:
             return None
         currency = Currency(
@@ -217,88 +165,37 @@ class CurrencyObjectAttr(object):
     
     def __set__(self, obj, value):
         if isinstance(value, Currency):
-            setattr(obj, self.field.attname, self.field._get_currency_value(value))
+            setattr(obj, self.access.currency, self.access._get_currency_value(value))
         else:
-            setattr(obj, self.field.attname, value)
+            setattr(obj, self.access.currency, value)
 
 
-class CurrencyField(models.CharField):
-    ''' Currency '''
-    
-    def __init__(self, *args, **kwargs):
-        from .currencies import CURRENCIES
-        kwargs.setdefault('max_length', 3)
-        kwargs.setdefault('default', price_settings.DEFAULT_CURRENCY)
-        kwargs.setdefault('choices', [(i[0], i[0]) for i in CURRENCIES])
-        self.property_name = kwargs.pop('property_name', '%s_obj')
-        super(CurrencyField, self).__init__(*args, **kwargs)
-    
-    def get_prep_value(self, value):
-        if isinstance(value, Currency):
-            value = self._get_currency_value(value)
-        return super(CurrencyField, self).get_prep_value(value)
-    
-    def get_db_prep_value(self, value, connection, prepared=False):
-        if isinstance(value, Currency):
-            value = self._get_currency_value(value)
-        return super(CurrencyField, self).get_db_prep_value(value, connection=connection, prepared=prepared)
-    
-    def get_db_prep_save(self, value, connection):
-        if isinstance(value, Currency):
-            value = self._get_currency_value(value)
-        return super(CurrencyField, self).get_db_prep_save(value, connection=connection)
-    
-    def value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
-        if isinstance(value, Currency):
-            value = self._get_currency_value(value)
-        return value
-    
-    def to_python(self, value):
-        if isinstance(value, Currency):
-            return value
-        return super(CurrencyField, self).to_python(value)
-    
-    def clean(self, value, model_instance):
-        if isinstance(value, Currency):
-            value = value.iso_code
-        return super(CurrencyField, self).clean(value, model_instance)
+class CurrencyAccess(models.CharField):
+    def __init__(self, currency):
+        self.currency = currency
     
     def _get_currency_value(self, currency):
         return currency.iso_code
     
     def contribute_to_class(self, cls, name):
-        super(CurrencyField, self).contribute_to_class(cls, name)
-        property_name = self.property_name
-        if '%s' in property_name:
-            property_name = property_name % name
-        setattr(cls, property_name, CurrencyObjectAttr(cls, self, name))
+        setattr(cls, name, CurrencyObjectAttr(cls, self, name))
         def get_currency(s):
-            return getattr(s, property_name)
+            return getattr(s, name)
         setattr(cls, "get_%s" % name, get_currency)
         def set_currency(s, v):
-            return setattr(s, property_name, v)
+            return setattr(s, name, v)
         setattr(cls, "set_%s" % name, set_currency)
+
+
+# tax
+
+
+class TaxField(models.ForeignKey):
+    def __init__(self, *args, **kwargs):
+        from .models import Tax
+        kwargs.setdefault('to', Tax)
+        kwargs.setdefault('related_name', '+')
+        super(TaxField, self).__init__(*args, **kwargs)
     
-    def formfield(self, **kwargs):
-        # choice fields ignore form_class param, so we have to do this some other way here
-        field = super(CurrencyField, self).formfield(**kwargs)
-        old_prepare_value = field.prepare_value
-        old_valid_value = field.valid_value
-        def currency_prepare_value(value):
-            if isinstance(value, Currency):
-                value = value.iso_code
-            return old_prepare_value(value)
-        def currency_valid_value(value):
-            if isinstance(value, Currency):
-                value = value.iso_code
-            return old_valid_value(value)
-        field.prepare_value = currency_prepare_value
-        field.valid_value = currency_valid_value
-        return field
-    
-    def south_field_triple(self):
-        field_class, args, kwargs = south_field_triple(self)
-        kwargs['property_name'] = repr(self.property_name)
-        return field_class, args, kwargs
+    south_field_triple = south_field_triple
 

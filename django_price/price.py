@@ -21,8 +21,9 @@ class Price(object):
         self.net = net
         
         # support tax models
-        if tax is not None and hasattr(tax, 'get_real_instance'):
-            tax = tax.get_real_instance()
+        if tax is not None and hasattr(tax, 'get_tax'):
+            tax = tax.get_tax()
+        
         # calculate tax, gross
         self.applied_taxes = {}
         if not tax is None and not gross is None:
@@ -116,6 +117,19 @@ class Price(object):
                 result.applied_taxes[tax] = amount
         return result
     
+    def __neg__(self):
+        result = Price(
+            net = -self.net,
+            currency = self.currency,
+        )
+        result.gross = -self.gross
+        for tax, amount in self.applied_taxes.iteritems():
+            if tax in result.applied_taxes:
+                result.applied_taxes[tax] -= amount
+            else:
+                result.applied_taxes[tax] = -amount
+        return result
+    
     def __mul__(self, factor):
         if not isinstance(factor, (int, long, float, decimal.Decimal)):
             raise TypeError("Cannot multiply with %s" % type(factor))
@@ -155,6 +169,7 @@ class Price(object):
         return result
     __truediv__ = __div__
     
+    # django_ajax hook
     def ajax_data(self):
         return {
             'tax': self.formatted_tax,

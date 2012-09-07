@@ -29,6 +29,7 @@ class Currency(object):
     def __ne__(self, other):
         return not self == other
     
+    # django_ajax hook
     def ajax_data(self):
         return {
             'iso_code': self.iso_code,
