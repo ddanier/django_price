@@ -17,6 +17,10 @@ class Tax(SubDeferredPolymorphBaseModel):
     def __unicode__(self):
         return self.name
     
+    @property
+    def unique_id(self):
+        return self.get_tax().unique_id
+    
     def amount(self, net):
         return self.get_tax().amount(net)
     
@@ -37,7 +41,8 @@ class LinearTax(Tax):
     def get_tax(self):
         from . import LinearTax
         tax = LinearTax(self.name, self.percent)
-        tax._instance = self
+        tax._unique_id = 'linear-pk-%d' % self.pk
+        tax._model_instance = self
         return tax
 
 
@@ -46,7 +51,8 @@ class MultiTax(Tax):
     
     def get_tax(self):
         from . import MultiTax
-        tax = MultiTax(self.taxes, self.name)
-        tax._instance = self
+        tax = MultiTax(list(self.taxes.all()), self.name)
+        tax._unique_id = 'multi-pk-%d' % self.pk
+        tax._model_instance = self
         return tax
 

@@ -26,6 +26,13 @@ class PriceField(models.DecimalField):
     south_field_triple = south_field_triple
 
 
+class PrecisePriceField(models.DecimalField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('max_digits', 21)
+        kwargs.setdefault('decimal_places', 9)
+        super(PrecisePriceField, self).__init__(*args, **kwargs)
+
+
 class PriceObjectAttr(object):
     def __init__(self, model, access, name):
         self.model = model
