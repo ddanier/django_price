@@ -83,6 +83,18 @@ class Price(object):
         return CalculatedPrice(applied_taxes, self.currency)
     
     @property
+    def precise_net(self):
+        return sum([t[1] for t in self._applied_taxes.values()])
+    
+    @property
+    def precise_gross(self):
+        return sum([t[2] for t in self._applied_taxes.values()])
+    
+    @property
+    def precise_tax(self):
+        return sum([t[2] - t[1] for t in self._applied_taxes.values()])
+    
+    @property
     def tax(self):
         return self.gross - self.net
     
