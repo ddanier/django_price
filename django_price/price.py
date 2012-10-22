@@ -196,7 +196,7 @@ class Price(object):
 
 
 class CalculatedPrice(Price):
-    def __init__(self, applied_taxes, currency):
+    def __init__(self, applied_taxes, currency=None):
         if currency is None:
             currency = price_settings.DEFAULT_CURRENCY
         if not isinstance(currency, Currency):
