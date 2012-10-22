@@ -1,6 +1,7 @@
 from django.db import models
+from django_deferred_polymorph.models import DeferredPolymorphManager
 
-class TaxManager(models.Manager):
+class TaxManager(DeferredPolymorphManager):
     _cache = {}
     
     def get_for_id(self, id):
