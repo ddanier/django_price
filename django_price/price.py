@@ -166,7 +166,7 @@ class Price(object):
         applied_taxes = {}
         for tax, net, gross in self._applied_taxes.values():
             calc_net = net * factor
-            calc_gross = tax.apply(calc_net)
+            calc_gross = gross * factor
             applied_taxes[tax.unique_id] = (tax, calc_net, calc_gross)
         return CalculatedPrice(applied_taxes, self.currency)
     
@@ -180,7 +180,7 @@ class Price(object):
         applied_taxes = {}
         for tax, net, gross in self._applied_taxes.values():
             calc_net = net / factor
-            calc_gross = tax.apply(calc_net)
+            calc_gross = gross / factor
             applied_taxes[tax.unique_id] = (tax, calc_net, calc_gross)
         return CalculatedPrice(applied_taxes, self.currency)
     __truediv__ = __div__
