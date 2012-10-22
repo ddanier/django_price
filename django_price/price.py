@@ -122,8 +122,8 @@ class Price(object):
         return self._format_amount(self.gross)
     
     @property
-    def formatted_tax_amount(self):
-        return self._format_amount(self.tax_amount)
+    def formatted_tax(self):
+        return self._format_amount(self.tax)
     
     def __add__(self, other):
         # EmptyPrice should work regardless of currency, does not change anything
