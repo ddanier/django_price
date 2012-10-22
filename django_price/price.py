@@ -136,8 +136,11 @@ class Price(object):
         applied_taxes = self._applied_taxes.copy()
         for tax, net, gross in other._applied_taxes.values():
             if tax.unique_id in applied_taxes:
-                applied_taxes[tax.unique_id][1] += net
-                applied_taxes[tax.unique_id][2] += gross
+                applied_taxes[tax.unique_id] = (
+                    applied_taxes[tax.unique_id][0],
+                    applied_taxes[tax.unique_id][1] + net,
+                    applied_taxes[tax.unique_id][2] + gross,
+                )
             else:
                 applied_taxes[tax.unique_id] = (tax, net, gross)
         # filter out NO_TAX, if it is not relevant

@@ -4,6 +4,7 @@ from django.db import models
 from django_deferred_polymorph.models import SubDeferredPolymorphBaseModel
 import decimal
 import datetime
+from .manager import TaxManager
 
 
 # TODO: Versionized Tax (Tax should NEVER get changed, as this may
@@ -13,6 +14,8 @@ class Tax(SubDeferredPolymorphBaseModel):
     
     created = models.DateTimeField(editable=False, default=datetime.datetime.now)
     modified = models.DateTimeField(editable=False, default=datetime.datetime.now, auto_now=True)
+    
+    objects = TaxManager()
     
     def __unicode__(self):
         return self.name

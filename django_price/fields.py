@@ -88,12 +88,19 @@ class PriceAccessBase(object):
             setattr(instance, self.currency, currency)
     
     def _get_tax(self, instance):
+        from django.db.models.fields import FieldDoesNotExist
+        from .models import Tax
         tax = self.tax
         if hasattr(self.tax, '__call__'):
             tax = tax(instance)
         if isinstance(tax, Tax):
             return tax
-        return getattr(instance, tax)
+        try:
+            field = instance._meta.get_field(tax)
+        except FieldDoesNotExist:
+            return getattr(instance, tax)
+        tax_id = getattr(instance, field.attname)
+        return Tax.objects.get_for_id(tax_id)
     
     def _get_price(self, instance, price):
         raise NotImplemented()
