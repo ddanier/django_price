@@ -63,7 +63,7 @@ class Price(object):
         from django.utils.translation import ugettext
         return ugettext('%(currency)s %(amount)s') % {
             'amount': self.formatted_gross,
-            'currency': self.currency.symbol if self.currency.symbol else self.currency.iso_code,
+            'currency': self.formatted_currency,
         }
     
     def copy(self):
@@ -116,6 +116,10 @@ class Price(object):
             for tax, net, gross
             in self._applied_taxes.values()
         ]
+    
+    @property
+    def formatted_currency(self):
+        return self.currency.symbol if self.currency.symbol else self.currency.iso_code
     
     def _format_amount(self, value):
         from django.utils.formats import number_format
