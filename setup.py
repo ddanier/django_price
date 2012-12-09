@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "django_price",
-    version = "0.1.0",
+    version = "0.1.0-2",
     description = 'Handling price information in django',
     author = 'David Danier',
     author_email = 'david.danier@team23.de',
@@ -11,9 +11,9 @@ setup(
     packages = [
         'django_price',
     ],
-    requires = [
-        'django(>=1.4)',
-        'django_deferred_polymorphic(>=0.1.0)',
+    install_requires = [
+        'Django >=1.4',
+        'django_deferred_polymorph >=0.1.0',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
