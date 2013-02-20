@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "django_price",
-    version = "0.1.0-2",
+    version = "0.1.1-1",
     description = 'Handling price information in django',
     author = 'David Danier',
     author_email = 'david.danier@team23.de',
@@ -10,6 +10,7 @@ setup(
     long_description=open('README.rst', 'r').read(),
     packages = [
         'django_price',
+        'django_price.migrations',
     ],
     install_requires = [
         'Django >=1.4',
