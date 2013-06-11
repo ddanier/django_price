@@ -110,12 +110,14 @@ class PriceAccessBase(object):
     
     def contribute_to_class(self, cls, name):
         setattr(cls, name, PriceObjectAttr(cls, self, name))
-        def get_price(s):
-            return getattr(s, name)
-        setattr(cls, "get_%s" % name, get_price)
-        def set_price(s, v):
-            return setattr(s, name, v)
-        setattr(cls, "set_%s" % name, set_price)
+        if not hasattr(cls, "get_%s" % name):
+            def get_price(s):
+                return getattr(s, name)
+            setattr(cls, "get_%s" % name, get_price)
+        if not hasattr(cls, "set_%s" % name):
+            def set_price(s, v):
+                return setattr(s, name, v)
+            setattr(cls, "set_%s" % name, set_price)
 
 
 class NetPriceAccess(PriceAccessBase):
