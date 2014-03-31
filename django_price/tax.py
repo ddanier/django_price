@@ -73,7 +73,7 @@ class MultiTax(Tax):
         self.taxes = taxes
     
     def _get_unique_id(self):
-        return 'multi-%s' % '-'.join(list(sort([t.get_id() for t in self.taxes])))
+        return 'multi-%s' % '-'.join(list(sorted([t.get_id() for t in self.taxes])))
     
     def amount(self, net):
         amount = decimal.Decimal(0)
