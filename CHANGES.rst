@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.1
+-----
+
+* Added Django 1.7 migrations
+
 0.2.0
 -----
 
