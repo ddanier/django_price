@@ -1,0 +1,6 @@
+pytest
+pytest-describe
+pytest-pythonpath
+pytest-django
+tox >= 1.8
+django_deferred_polymorph
