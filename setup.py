@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "django_price",
-    version = "0.1.1-1",
+    version = "0.2.0",
     description = 'Handling price information in django',
     author = 'David Danier',
     author_email = 'david.danier@team23.de',
