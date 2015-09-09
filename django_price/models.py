@@ -13,7 +13,7 @@ class Tax(SubDeferredPolymorphBaseModel):
     name = models.CharField(max_length=25)
     
     created = models.DateTimeField(editable=False, default=datetime.datetime.now)
-    modified = models.DateTimeField(editable=False, default=datetime.datetime.now, auto_now=True)
+    modified = models.DateTimeField(editable=False, auto_now=True)
     
     objects = TaxManager()
     
