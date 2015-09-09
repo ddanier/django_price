@@ -10,6 +10,12 @@ def test_smoke():
 
 
 def test_system_checks():
-    from django.core import checks
+    import django
 
-    assert not checks.run_checks(include_deployment_checks=False), "Some Django system checks failed"
+    if django.VERSION >= (1, 7, 0):
+        from django.core import checks
+
+        if django.VERSION >= (1, 8, 0):
+            assert not checks.run_checks(include_deployment_checks=False), "Some Django system checks failed"
+        else:
+            assert not checks.run_checks(), "Some Django system checks failed"
