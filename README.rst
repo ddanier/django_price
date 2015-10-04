@@ -27,6 +27,7 @@ FEATURES
 * Stores taxes to your database (LinearTax and Multitax)
 * Proper rounding for prices (on demand, based on used currency)
 * Utilities to:
+
   - Store prices to the database
   - Round prices based on the used currency
 
